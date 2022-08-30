@@ -12,6 +12,7 @@ prior_network = DiffusionPriorNetwork(
     heads=8
 ).to("cuda:0")
 
+
 # diffusion prior network, which contains the CLIP and network (with transformer) above
 
 diffusion_prior = DiffusionPrior(
