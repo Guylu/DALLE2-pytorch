@@ -1,0 +1,24 @@
+{
+    "os": "Linux-3.10.0-957.1.3.el7.x86_64-x86_64-with-glibc2.17",
+    "python": "3.10.4",
+    "heartbeatAt": "2022-08-29T13:35:21.874065",
+    "startedAt": "2022-08-29T13:35:20.863160",
+    "docker": null,
+    "gpu": "Quadro RTX 8000",
+    "gpu_count": 2,
+    "cpu_count": 48,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "/net/mraid08/export/jafar/Microbiome/Analyses/guy/G_CLIP/Contrastive_Medical_Information_Representation/latent_diffusion/train_diffusion_prior.py",
+    "codePath": "train_diffusion_prior.py",
+    "git": {
+        "remote": "https://github.com/Guylu/DALLE2-pytorch.git",
+        "commit": "ba58ae0bf2416a11e522d7f3afd604a9c5d488c6"
+    },
+    "email": "guylutsker96@gmail.com",
+    "root": "/net/mraid08/export/jafar/Microbiome/Analyses/guy/G_CLIP/Contrastive_Medical_Information_Representation/latent_diffusion",
+    "host": "n114.mcl11.weizmann.ac.il",
+    "username": "guylu",
+    "executable": "/net/mraid08/export/jafar/Microbiome/Analyses/guy/conda/ana/envs/me/bin/python"
+}

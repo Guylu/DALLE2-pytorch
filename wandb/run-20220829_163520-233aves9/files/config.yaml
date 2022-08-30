@@ -1,0 +1,132 @@
+wandb_version: 1
+
+Distributed:
+  desc: null
+  value: false
+DistributedType:
+  desc: null
+  value: DistributedType.NO
+MixedPrecision:
+  desc: null
+  value: 'no'
+NumProcesses:
+  desc: null
+  value: 1
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.13.1
+    code_path: code/train_diffusion_prior.py
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    python_version: 3.10.4
+    start_time: 1661780120.881648
+    t:
+      1:
+      - 1
+      - 41
+      - 55
+      - 71
+      - 79
+      2:
+      - 1
+      - 41
+      - 55
+      - 71
+      - 79
+      3:
+      - 16
+      - 23
+      4: 3.10.4
+      5: 0.13.1
+      8:
+      - 5
+data:
+  desc: null
+  value:
+    batch_size: 128
+    eval_every_seconds: 1600
+    image_url: exp_img
+    meta_url: <path to your metadata>
+    num_data_points: 100000
+    splits:
+      test: 0.1
+      train: 0.8
+      val: 0.1
+prior:
+  desc: null
+  value:
+    beta_schedule: cosine
+    clip:
+      base_model_kwargs: null
+      make: openai
+      model: ViT-L/14
+    cond_drop_prob: 0.1
+    condition_on_text_encodings: true
+    image_channels: 3
+    image_embed_dim: 512
+    image_size: 224
+    loss_type: l2
+    net:
+      attn_dropout: 0.05
+      depth: 12
+      dim: 512
+      dim_head: 64
+      ff_dropout: 0.05
+      ff_mult: 4
+      final_proj: true
+      heads: 12
+      max_text_len: 77
+      norm_in: false
+      norm_out: true
+      normformer: true
+      num_image_embeds: 1
+      num_text_embeds: 1
+      num_time_embeds: 1
+      num_timesteps: 1000
+      rotary_emb: true
+    predict_x_start: true
+    sample_timesteps: 64
+    timesteps: 1000
+tracker:
+  desc: null
+  value:
+    data_path: .prior
+    load: null
+    log:
+      auto_resume: false
+      log_type: wandb
+      resume: false
+      verbose: true
+      wandb_entity: guylu
+      wandb_project: prior_debugging
+      wandb_resume: false
+    overwrite_data_path: true
+    save:
+    - save_all: false
+      save_best: true
+      save_best_to: .prior/best_checkpoint.pth
+      save_latest: true
+      save_latest_to: .prior/latest_checkpoint.pth
+      save_to: local
+      save_type: checkpoint
+train:
+  desc: null
+  value:
+    amp: false
+    best_validation_loss: 1000000000.0
+    current_epoch: 0
+    ema_beta: 0.9999
+    epochs: 5
+    eval_timesteps:
+    - 64
+    - 1000
+    lr: 0.00011
+    max_grad_norm: 0.5
+    num_samples_seen: 0
+    random_seed: 84513
+    save_every_seconds: 3600
+    use_ema: true
+    warmup_steps: 50
+    wd: 0.0602

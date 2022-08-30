@@ -1,0 +1,274 @@
+diff --git a/configs/train_prior_config.example.json b/configs/train_prior_config.example.json
+index 405b853..74c042d 100644
+--- a/configs/train_prior_config.example.json
++++ b/configs/train_prior_config.example.json
+@@ -5,7 +5,7 @@
+             "model": "ViT-L/14"
+         },
+         "net": {
+-            "dim": 768,
++            "dim": 512,
+             "depth": 12,
+             "num_timesteps": 1000,
+             "max_text_len": 77,
+@@ -22,7 +22,7 @@
+             "normformer": true,
+             "rotary_emb": true
+         },
+-        "image_embed_dim": 768,
++        "image_embed_dim": 512,
+         "image_size": 224,
+         "image_channels": 3,
+         "timesteps": 1000,
+@@ -37,7 +37,7 @@
+         "batch_size": 128,
+         "num_data_points": 100000,
+         "eval_every_seconds": 1600,
+-        "image_url": "<path to your images>",
++        "image_url": "test_data",
+         "meta_url": "<path to your metadata>",
+         "splits": {
+             "train": 0.8,
+@@ -64,7 +64,7 @@
+         "overwrite_data_path": true,
+         "log": {
+             "log_type": "wandb",
+-            "wandb_entity": "<your wandb username>",
++            "wandb_entity": "guylu",
+             "wandb_project": "prior_debugging",
+             "wandb_resume": false,
+             "verbose": true
+diff --git a/dalle2_pytorch/train_configs.py b/dalle2_pytorch/train_configs.py
+index 6c5bee8..47954cd 100644
+--- a/dalle2_pytorch/train_configs.py
++++ b/dalle2_pytorch/train_configs.py
+@@ -17,18 +17,22 @@ from dalle2_pytorch.dalle2_pytorch import (
+ )
+ from dalle2_pytorch.trackers import Tracker, create_loader, create_logger, create_saver
+ 
++
+ # helper functions
+ 
+ def exists(val):
+     return val is not None
+ 
++
+ def default(val, d):
+     return val if exists(val) else d
+ 
++
+ InnerType = TypeVar('InnerType')
+ ListOrTuple = Union[List[InnerType], Tuple[InnerType]]
+ SingularOrIterable = Union[InnerType, ListOrTuple[InnerType]]
+ 
++
+ # general pydantic classes
+ 
+ class TrainSplitConfig(BaseModel):
+@@ -43,6 +47,7 @@ class TrainSplitConfig(BaseModel):
+             raise ValueError(f'{fields.keys()} must sum to 1.0. Found: {actual_sum}')
+         return fields
+ 
++
+ class TrackerLogConfig(BaseModel):
+     log_type: str = 'console'
+     resume: bool = False  # For logs that are saved to unique locations, resume a previous run
+@@ -57,6 +62,7 @@ class TrackerLogConfig(BaseModel):
+         kwargs = self.dict()
+         return create_logger(self.log_type, data_path, **kwargs)
+ 
++
+ class TrackerLoadConfig(BaseModel):
+     load_from: Optional[str] = None
+     only_auto_resume: bool = False  # Only attempt to load if the logger is auto-resuming
+@@ -70,6 +76,7 @@ class TrackerLoadConfig(BaseModel):
+             return None
+         return create_loader(self.load_from, data_path, **kwargs)
+ 
++
+ class TrackerSaveConfig(BaseModel):
+     save_to: str = 'local'
+     save_all: bool = False
+@@ -83,6 +90,7 @@ class TrackerSaveConfig(BaseModel):
+         kwargs = self.dict()
+         return create_saver(self.save_to, data_path, **kwargs)
+ 
++
+ class TrackerConfig(BaseModel):
+     data_path: str = '.tracker_data'
+     overwrite_data_path: bool = False
+@@ -107,6 +115,7 @@ class TrackerConfig(BaseModel):
+         tracker.init(full_config, extra_config)
+         return tracker
+ 
++
+ # diffusion prior pydantic classes
+ 
+ class AdapterConfig(BaseModel):
+@@ -124,6 +133,7 @@ class AdapterConfig(BaseModel):
+         else:
+             raise AttributeError("No adapter with that name is available.")
+ 
++
+ class DiffusionPriorNetworkConfig(BaseModel):
+     dim: int
+     depth: int
+@@ -150,6 +160,7 @@ class DiffusionPriorNetworkConfig(BaseModel):
+         kwargs = self.dict()
+         return DiffusionPriorNetwork(**kwargs)
+ 
++
+ class DiffusionPriorConfig(BaseModel):
+     clip: AdapterConfig = None
+     net: DiffusionPriorNetworkConfig
+@@ -178,7 +189,8 @@ class DiffusionPriorConfig(BaseModel):
+             clip = self.clip.create()
+ 
+         diffusion_prior_network = self.net.create()
+-        return DiffusionPrior(net = diffusion_prior_network, clip = clip, **kwargs)
++        return DiffusionPrior(net=diffusion_prior_network, clip=clip, **kwargs)
++
+ 
+ class DiffusionPriorTrainConfig(BaseModel):
+     epochs: int = 1
+@@ -188,21 +200,23 @@ class DiffusionPriorTrainConfig(BaseModel):
+     use_ema: bool = True
+     ema_beta: float = 0.99
+     amp: bool = False
+-    warmup_steps: int = None             # number of warmup steps
+-    save_every_seconds: int = 3600       # how often to save
+-    eval_timesteps: List[int] = [64]     # which sampling timesteps to evaluate with
+-    best_validation_loss: float = 1e9    # the current best valudation loss observed
+-    current_epoch: int = 0               # the current epoch
+-    num_samples_seen: int = 0            # the current number of samples seen
+-    random_seed: int = 0                 # manual seed for torch
++    warmup_steps: int = None  # number of warmup steps
++    save_every_seconds: int = 3600  # how often to save
++    eval_timesteps: List[int] = [64]  # which sampling timesteps to evaluate with
++    best_validation_loss: float = 1e9  # the current best valudation loss observed
++    current_epoch: int = 0  # the current epoch
++    num_samples_seen: int = 0  # the current number of samples seen
++    random_seed: int = 0  # manual seed for torch
++
+ 
+ class DiffusionPriorDataConfig(BaseModel):
+-    image_url: str                   # path to embeddings folder
+-    meta_url: str                    # path to metadata (captions) for images
+-    splits: TrainSplitConfig         # define train, validation, test splits for your dataset
+-    batch_size: int                  # per-gpu batch size used to train the model
+-    num_data_points: int = 25e7      # total number of datapoints to train on
+-    eval_every_seconds: int = 3600   # validation statistics will be performed this often
++    image_url: str  # path to embeddings folder
++    meta_url: str  # path to metadata (captions) for images
++    splits: TrainSplitConfig  # define train, validation, test splits for your dataset
++    batch_size: int  # per-gpu batch size used to train the model
++    num_data_points: int = 25e7  # total number of datapoints to train on
++    eval_every_seconds: int = 3600  # validation statistics will be performed this often
++
+ 
+ class TrainDiffusionPriorConfig(BaseModel):
+     prior: DiffusionPriorConfig
+@@ -216,6 +230,7 @@ class TrainDiffusionPriorConfig(BaseModel):
+             config = json.load(f)
+         return cls(**config)
+ 
++
+ # decoder pydantic classes
+ 
+ class UnetConfig(BaseModel):
+@@ -234,11 +249,12 @@ class UnetConfig(BaseModel):
+     class Config:
+         extra = "allow"
+ 
++
+ class DecoderConfig(BaseModel):
+     unets: ListOrTuple[UnetConfig]
+     image_size: int = None
+     image_sizes: ListOrTuple[int] = None
+-    clip: Optional[AdapterConfig]   # The clip model to use if embeddings are not provided
++    clip: Optional[AdapterConfig]  # The clip model to use if embeddings are not provided
+     channels: int = 3
+     timesteps: int = 1000
+     sample_timesteps: Optional[SingularOrIterable[Optional[int]]] = None
+@@ -270,10 +286,11 @@ class DecoderConfig(BaseModel):
+     class Config:
+         extra = "allow"
+ 
++
+ class DecoderDataConfig(BaseModel):
+-    webdataset_base_url: str               # path to a webdataset with jpg images
+-    img_embeddings_url: Optional[str]      # path to .npy files with embeddings
+-    text_embeddings_url: Optional[str]     # path to .npy files with embeddings
++    webdataset_base_url: str  # path to a webdataset with jpg images
++    img_embeddings_url: Optional[str]  # path to .npy files with embeddings
++    text_embeddings_url: Optional[str]  # path to .npy files with embeddings
+     num_workers: int = 4
+     batch_size: int = 64
+     start_shard: int = 0
+@@ -301,6 +318,7 @@ class DecoderDataConfig(BaseModel):
+             transforms.append(_get_transformation(transform_name, **transform_kwargs))
+         return T.Compose(transforms)
+ 
++
+ class DecoderTrainConfig(BaseModel):
+     epochs: int = 20
+     lr: SingularOrIterable[float] = 1e-4
+@@ -309,16 +327,17 @@ class DecoderTrainConfig(BaseModel):
+     find_unused_parameters: bool = True
+     max_grad_norm: SingularOrIterable[float] = 0.5
+     save_every_n_samples: int = 100000
+-    n_sample_images: int = 6                       # The number of example images to produce when sampling the train and test dataset
++    n_sample_images: int = 6  # The number of example images to produce when sampling the train and test dataset
+     cond_scale: Union[float, List[float]] = 1.0
+     device: str = 'cuda:0'
+-    epoch_samples: int = None                      # Limits the number of samples per epoch. None means no limit. Required if resample_train is true as otherwise the number of samples per epoch is infinite.
+-    validation_samples: int = None                 # Same as above but for validation.
++    epoch_samples: int = None  # Limits the number of samples per epoch. None means no limit. Required if resample_train is true as otherwise the number of samples per epoch is infinite.
++    validation_samples: int = None  # Same as above but for validation.
+     save_immediately: bool = False
+     use_ema: bool = True
+     ema_beta: float = 0.999
+     amp: bool = False
+-    unet_training_mask: ListOrTuple[bool] = None   # If None, use all unets
++    unet_training_mask: ListOrTuple[bool] = None  # If None, use all unets
++
+ 
+ class DecoderEvaluateConfig(BaseModel):
+     n_evaluation_samples: int = 1000
+@@ -327,6 +346,7 @@ class DecoderEvaluateConfig(BaseModel):
+     KID: Dict[str, Any] = None
+     LPIPS: Dict[str, Any] = None
+ 
++
+ class TrainDecoderConfig(BaseModel):
+     decoder: DecoderConfig
+     data: DecoderDataConfig
+@@ -340,7 +360,7 @@ class TrainDecoderConfig(BaseModel):
+         with open(json_path) as f:
+             config = json.load(f)
+         return cls(**config)
+-    
++
+     @root_validator
+     def check_has_embeddings(cls, values):
+         # Makes sure that enough information is provided to get the embeddings specified for training
+@@ -357,13 +377,16 @@ class TrainDecoderConfig(BaseModel):
+ 
+         if using_text_embeddings:
+             # Then we need some way to get the embeddings
+-            assert using_clip or exists(text_emb_url), 'If text conditioning, either clip or text_embeddings_url must be provided'
++            assert using_clip or exists(
++                text_emb_url), 'If text conditioning, either clip or text_embeddings_url must be provided'
+ 
+         if using_clip:
+             if using_text_embeddings:
+-                assert not exists(text_emb_url) or not exists(img_emb_url), 'Loaded clip, but also provided text_embeddings_url and img_embeddings_url. This is redundant. Remove the clip model or the text embeddings'
++                assert not exists(text_emb_url) or not exists(
++                    img_emb_url), 'Loaded clip, but also provided text_embeddings_url and img_embeddings_url. This is redundant. Remove the clip model or the text embeddings'
+             else:
+-                assert not exists(img_emb_url), 'Loaded clip, but also provided img_embeddings_url. This is redundant. Remove the clip model or the embeddings'
++                assert not exists(
++                    img_emb_url), 'Loaded clip, but also provided img_embeddings_url. This is redundant. Remove the clip model or the embeddings'
+ 
+         if text_emb_url:
+             assert using_text_embeddings, "Text embeddings are being loaded, but text embeddings are not being conditioned on. This will slow down the dataloader for no reason."
