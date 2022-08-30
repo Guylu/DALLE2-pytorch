@@ -51,7 +51,6 @@ optimizer = optim.SGD(diffusion_prior.parameters(), lr=1e-3)
 diffusion_prior.train()
 diffusion_prior = diffusion_prior.to("cuda:0")
 for epoch in range(1000):  # loop over the dataset multiple times
-
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
         # get the inputs; data is a list of [inputs, labels]
