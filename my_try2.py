@@ -20,7 +20,7 @@ from sklearn.model_selection import train_test_split
 from dalle2_pytorch import DiffusionPriorNetwork, DiffusionPrior
 
 hyperparameter_defaults = dict(
-    epochs=1000,
+    epochs=200,
     seed=96,
     lr=0.0005,
     batch_size=500,
